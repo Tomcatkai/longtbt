@@ -38,12 +38,12 @@ def process_file(zip_file_path):
     处理单个ZIP文件：解压、转换CSV为Parquet，并清理临时文件。
     """
     trading_pair = os.path.basename(os.path.dirname(os.path.dirname(zip_file_path)))
-    parquet_directory = f"fdisk/binance_parquet/data/spot/monthly/klines/{trading_pair}/1s/"
+    parquet_directory = f"/media/longt/fdisk/binance_parquet/data/spot/monthly/klines/{trading_pair}/1s/"
     if not os.path.exists(parquet_directory):
         os.makedirs(parquet_directory)
 
     csv_file_path = zip_file_path.replace('.zip', '.csv').replace(
-        f'fdisk/binance/data/spot/monthly/klines/{trading_pair}/1s/', '/home/longt/temp/')
+        f'/media/longt/fdisk/binance/data/spot/monthly/klines/{trading_pair}/1s/', '/home/longt/temp/')
     try:
         # 解压ZIP文件
         with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
@@ -67,7 +67,8 @@ def process_file(zip_file_path):
         df['open_time'] = pd.to_datetime(df['open_time'], unit='ms')
         df['close_time'] = pd.to_datetime(df['close_time'], unit='ms')
         # 替换文件路径和扩展名，准备写入Parquet文件
-        parquet_path = zip_file_path.replace('.zip', '.parquet').replace('fdisk/binance', 'fdisk/binance_parquet')
+        parquet_path = zip_file_path.replace('.zip', '.parquet').replace('/media/longt/fdisk/binance',
+                                                                         '/media/longt/fdisk/binance_parquet')
         # 使用Zstandard压缩保存为Parquet文件
         df.to_parquet(parquet_path, engine='pyarrow', compression='zstd')
         # 重新读取parquet数据,比对新数据和老数据进行校验
@@ -96,7 +97,7 @@ def process_file(zip_file_path):
 
 if __name__ == "__main__":
 
-    base_path = "fdisk/binance/data/spot/monthly/klines/"
+    base_path = "/media/longt/fdisk/binance/data/spot/monthly/klines/"
     if not os.path.exists(converted_files_path):
         df_converted_list = pd.DataFrame(columns=['file_path'])
         df_converted_list.to_parquet(converted_files_path, engine='pyarrow', compression='zstd')

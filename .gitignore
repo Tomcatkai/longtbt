@@ -1,1 +1,4 @@
 .idea/
+/toparquet/to_parquet_info.log
+/toparquet/to_parquet_error.log
+/toparquet/converted_files_list.parquet
