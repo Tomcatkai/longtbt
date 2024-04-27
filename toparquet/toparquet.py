@@ -110,7 +110,7 @@ if __name__ == "__main__":
     if not os.path.exists(tmp_directory):
         os.makedirs(tmp_directory)
 
-    with Pool(processes=4) as pool:
+    with Pool(processes=6) as pool:
         for zip_file_path_dir in find_zip_files(base_path):
             pool.apply_async(process_file, args=(zip_file_path_dir,))
         pool.close()
