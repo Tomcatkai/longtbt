@@ -38,15 +38,6 @@ def find_zip_files(directory):
                 yield os.path.join(root, file)
 
 
-def is_file_converted(zip_file_path, df_converted):
-    """
-    检查文件是否已经被转换成parquet过了
-    :return: 转换过了:TRUE 没转换过: FALSE
-    """
-    contains_given_value = (df_converted['file_path'].isin([zip_file_path])).any()
-    return contains_given_value
-
-
 def process_file(zip_file_path):
     """
     处理单个ZIP文件：解压、转换CSV为Parquet，并清理临时文件。
@@ -97,17 +88,6 @@ def process_file(zip_file_path):
         if df.equals(df_reread):
             logger.info(f"成功处理 {zip_file_path}")
             del df, df_reread
-
-            lock.acquire()  # 获取锁
-            df_converted = pd.read_parquet(converted_files_path)
-            # 创建一个新的 DataFrame 来添加数据
-            new_data = pd.DataFrame({
-                'file_path': [zip_file_path]
-            })
-            # 将新数据追加到现有 DataFrame
-            df_converted = pd.concat([df_converted, new_data], ignore_index=True)
-            df_converted.to_parquet(converted_files_path, engine='pyarrow', compression='zstd')
-            lock.release()  # 释放锁
         else:
             raise Exception("数据核对不一致")
     except Exception as e:
@@ -127,17 +107,12 @@ if __name__ == "__main__":
     )
 
     base_path = "/media/longt/fdisk/binance/data/spot/monthly/klines/"
-    if not os.path.exists(converted_files_path):
-        df_converted_list = pd.DataFrame(columns=['file_path'])
-        df_converted_list.to_parquet(converted_files_path, engine='pyarrow', compression='zstd')
-    df_history_converted = pd.read_parquet(converted_files_path)
     if not os.path.exists(tmp_directory):
         os.makedirs(tmp_directory)
 
     with Pool(processes=4) as pool:
         for zip_file_path_dir in find_zip_files(base_path):
-            if not is_file_converted(zip_file_path_dir, df_history_converted):
-                pool.apply_async(process_file, args=(zip_file_path_dir,))
+            pool.apply_async(process_file, args=(zip_file_path_dir,))
         pool.close()
         pool.join()
     logger.info("所有文件已处理")
