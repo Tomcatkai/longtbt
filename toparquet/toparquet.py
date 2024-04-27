@@ -64,6 +64,7 @@ def process_file(zip_file_path):
     csv_file_path = zip_file_path.replace('.zip', '.csv').replace(
         f'/media/longt/fdisk/binance/data/spot/monthly/klines/{trading_pair}/1s/', '/home/longt/temp/')
     try:
+        lock.acquire()  # 获取锁
         # 解压ZIP文件
         with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_directory)
@@ -92,19 +93,21 @@ def process_file(zip_file_path):
         df.to_parquet(parquet_path, engine='cudf', compression='ZSTD')
         # 重新读取parquet数据,比对新数据和老数据进行校验
         df_reread = cudf.read_parquet(parquet_path)
+        lock.release()  # 释放锁
         if df.equals(df_reread):
             logger.info(f"成功处理 {zip_file_path}")
             del df, df_reread
 
-            with lock:
-                df_converted = pd.read_parquet(converted_files_path)
-                # 创建一个新的 DataFrame 来添加数据
-                new_data = pd.DataFrame({
-                    'file_path': [zip_file_path]
-                })
-                # 将新数据追加到现有 DataFrame
-                df_converted = pd.concat([df_converted, new_data], ignore_index=True)
-                df_converted.to_parquet(converted_files_path, engine='pyarrow', compression='zstd')
+            lock.acquire()  # 获取锁
+            df_converted = pd.read_parquet(converted_files_path)
+            # 创建一个新的 DataFrame 来添加数据
+            new_data = pd.DataFrame({
+                'file_path': [zip_file_path]
+            })
+            # 将新数据追加到现有 DataFrame
+            df_converted = pd.concat([df_converted, new_data], ignore_index=True)
+            df_converted.to_parquet(converted_files_path, engine='pyarrow', compression='zstd')
+            lock.release()  # 释放锁
         else:
             raise Exception("数据核对不一致")
     except Exception as e:
@@ -120,7 +123,7 @@ if __name__ == "__main__":
     rmm.reinitialize(
         managed_memory=True,  # 启用受管理的内存
         initial_pool_size=1 << 30,  # 初始内存池大小，例如1GB
-        maximum_pool_size=5 << 30  # 最大内存池大小，例如2GB
+        maximum_pool_size=6 << 30  # 最大内存池大小，例如2GB
     )
 
     base_path = "/media/longt/fdisk/binance/data/spot/monthly/klines/"
