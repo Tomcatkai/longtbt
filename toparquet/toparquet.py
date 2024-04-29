@@ -1,5 +1,7 @@
 import gc
 import multiprocessing
+
+from cudf import Decimal128Dtype
 from loguru import logger
 
 # 设置日志
@@ -63,15 +65,15 @@ def process_file(zip_file_path):
         # 使用Pandas读取CSV文件
         column_names = ['open_time', 'open', 'high', 'low', 'close', 'volume', 'close_time', 'quote_asset_volume',
                         'number_of_trades', 'taker_buy_base_asset_volume', 'taker_buy_quote_asset_volume', 'ignore']
-        dtype_spec = {'open': 'float64',
-                      'high': 'float64',
-                      'low': 'float64',
-                      'close': 'float64',
-                      'volume': 'float64',
-                      'quote_asset_volume': 'float64',
-                      'number_of_trades': 'float64',
-                      'taker_buy_base_asset_volume': 'float64',
-                      'taker_buy_quote_asset_volume': 'float64',
+        dtype_spec = {'open': Decimal128Dtype(precision=34, scale=8),
+                      'high': Decimal128Dtype(precision=34, scale=8),
+                      'low': Decimal128Dtype(precision=34, scale=8),
+                      'close': Decimal128Dtype(precision=34, scale=8),
+                      'volume': Decimal128Dtype(precision=34, scale=8),
+                      'quote_asset_volume': Decimal128Dtype(precision=34, scale=8),
+                      'number_of_trades': Decimal128Dtype(precision=34, scale=8),
+                      'taker_buy_base_asset_volume': Decimal128Dtype(precision=34, scale=8),
+                      'taker_buy_quote_asset_volume': Decimal128Dtype(precision=34, scale=8),
                       'ignore': 'int64'}
         # 使用Pandas读取CSV文件,并为其设定列名
         df = cudf.read_csv(csv_file_path, header=None, names=column_names, dtype=dtype_spec)
