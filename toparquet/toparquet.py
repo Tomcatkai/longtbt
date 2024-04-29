@@ -107,7 +107,7 @@ if __name__ == "__main__":
     rmm.reinitialize(
         managed_memory=True,  # 启用受管理的内存
         initial_pool_size=1 << 30,  # 初始内存池大小，例如1GB
-        maximum_pool_size=5 << 30  # 最大内存池大小，例如2GB
+        maximum_pool_size=6 << 30  # 最大内存池大小，例如2GB
     )
 
     base_path = "/media/longt/fdisk/binance/data/spot/monthly/klines/"
