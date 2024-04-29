@@ -22,7 +22,6 @@ import zipfile
 
 import cudf
 import rmm
-import pandas as pd
 from multiprocessing import Pool
 
 converted_files_path = "converted_files_list.parquet"
