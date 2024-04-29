@@ -87,7 +87,9 @@ def process_file(zip_file_path):
         # 重新读取parquet数据,比对新数据和老数据进行校验
         df_reread = cudf.read_parquet(parquet_path)
         lock.release()  # 释放锁
-        if df.equals(df_reread):
+        df_hash = df.hash_values(method="xxhash64").sum()
+        df_reread_hash = df_reread.hash_values(method="xxhash64").sum()
+        if df_hash == df_reread_hash:
             logger.info(f"成功处理 {zip_file_path}")
             del df, df_reread
         else:
