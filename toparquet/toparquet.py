@@ -23,11 +23,10 @@ import zipfile
 import cudf
 import rmm
 import pandas as pd
-from multiprocessing import Pool, Lock
+from multiprocessing import Pool
 
 converted_files_path = "converted_files_list.parquet"
 tmp_directory = "/home/longt/temp"
-lock = Lock()
 
 
 def find_zip_files(directory):
@@ -57,7 +56,6 @@ def process_file(zip_file_path):
     csv_file_path = zip_file_path.replace('.zip', '.csv').replace(
         f'/media/longt/fdisk/binance/data/spot/monthly/klines/{trading_pair}/1s/', '/home/longt/temp/')
     try:
-        lock.acquire()  # 获取锁
         # 解压ZIP文件
         with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
             zip_ref.extractall(tmp_directory)
@@ -86,7 +84,6 @@ def process_file(zip_file_path):
         df.to_parquet(parquet_path, engine='cudf', compression='ZSTD')
         # 重新读取parquet数据,比对新数据和老数据进行校验
         df_reread = cudf.read_parquet(parquet_path)
-        lock.release()  # 释放锁
         df_hash = df.hash_values(method="xxhash64").sum()
         df_reread_hash = df_reread.hash_values(method="xxhash64").sum()
         if df_hash == df_reread_hash:
