@@ -26,6 +26,7 @@ from multiprocessing import Pool
 
 converted_files_path = "converted_files_list.parquet"
 tmp_directory = "/home/longt/temp"
+cudf.set_option("spill", True)
 
 
 def find_zip_files(directory):
@@ -100,7 +101,7 @@ def process_file(zip_file_path):
 
 
 if __name__ == "__main__":
-    cudf.set_option("spill", True)
+
     rmm.reinitialize(
         managed_memory=True,  # 启用受管理的内存
         initial_pool_size=1 << 30,  # 初始内存池大小，例如1GB
