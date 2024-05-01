@@ -81,13 +81,14 @@ def process_file(zip_file_path):
                                                                          '/media/longt/fdisk/binance_parquet')
         # 使用Zstandard压缩保存为Parquet文件
         df.to_parquet(parquet_path, engine='cudf', compression='ZSTD')
+        df_hash = df.hash_values(method="xxhash64").sum()
+        del df
         # 重新读取parquet数据,比对新数据和老数据进行校验
         df_reread = cudf.read_parquet(parquet_path)
-        df_hash = df.hash_values(method="xxhash64").sum()
         df_reread_hash = df_reread.hash_values(method="xxhash64").sum()
+        del df_reread
         if df_hash == df_reread_hash:
             logger.info(f"成功处理 {zip_file_path}")
-            del df, df_reread
         else:
             raise Exception("数据核对不一致")
     except Exception as e:
@@ -103,14 +104,14 @@ if __name__ == "__main__":
     rmm.reinitialize(
         managed_memory=True,  # 启用受管理的内存
         initial_pool_size=1 << 30,  # 初始内存池大小，例如1GB
-        maximum_pool_size=6 << 30  # 最大内存池大小，例如2GB
+        maximum_pool_size=7 << 30  # 最大内存池大小，例如2GB
     )
 
     base_path = "/media/longt/fdisk/binance/data/spot/monthly/klines/"
     if not os.path.exists(tmp_directory):
         os.makedirs(tmp_directory)
 
-    with Pool(processes=6) as pool:
+    with Pool(processes=4) as pool:
         for zip_file_path_dir in find_zip_files(base_path):
             pool.apply_async(process_file, args=(zip_file_path_dir,))
         pool.close()
