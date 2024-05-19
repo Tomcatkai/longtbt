@@ -8,6 +8,8 @@ def SMA(values, n):
     """
     Return simple moving average of `values`, at
     each step taking into account `n` previous values.
+
+    返回 values 的简单移动平均值，在每一步中考虑前 n 个值。
     """
     return pd.Series(values).rolling(n).mean()
 
